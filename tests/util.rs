@@ -2,16 +2,21 @@
 
 use anyhow::Error;
 use escargot::CargoBuild;
-use std::result;
+use libc;
+use std::env;
 use std::process::{Command, Output};
+use std::result;
+use std::sync::Once;
+
 
 pub type Result<T> = result::Result<T, Error>;
 
-pub const DOCKER_IMAGE: &str = "debian:bullseye-slim";
+pub const BUILD_IMAGE: &str = "rust"; // FIXME: Map to a version?
+pub const DOCKER_IMAGE: &str = BUILD_IMAGE; // Run the test in the build image for simplicity
 pub const INST_BIN: &str = "/usr/bin/rsu";
 pub const TESTUSER: &str = "testuser";
 pub const TESTPASS: &str = "testpass";
-
+pub const RUST_VERSION: &str = "1.58"; // FIXME: Get local version?
 
 pub fn docker(cmd: Vec<&str>) -> Result<Output> {
     let out = Command::new("docker")
@@ -77,19 +82,49 @@ impl Drop for Container {
     }
 }
 
-fn build_target(features: &str) -> Result<String> {
-    let target_dir = if features == "" {
-        "target".to_owned()
-    } else {
-        format!("target/{}", features.replace(" ", "_"))
-    };
-    let bin = format!("{}/release/rsu", target_dir);
+fn getids() -> (u32, u32) {
+    unsafe { (libc::geteuid(), libc::getegid()) }
+}
 
-    let _cmd = CargoBuild::new()
-        .features(features)
-        .target_dir(target_dir.as_str())
-        .release()
-        .exec()?;
+
+static BUILD_LOCK: Once = Once::new();
+
+// FIXME: Could merge this with Container if we split this into a
+// crate, but not worth it ATM.
+fn build_in_container(targetdir: &str) -> Result<Output> {
+    // See https://hub.docker.com/_/rust
+    // docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/myapp -w /usr/src/myapp rust:1.23.0 cargo build --release
+
+    let (uid, gid) = getids();
+    let pwd = env::var("PWD")?;
+    let builddir = "/usr/src";
+    let imgtarget = format!("{builddir}/{targetdir}");
+    let user = format!("{uid}:{gid}");
+    let volume = format!("{pwd}:{builddir}");
+    let cli = vec!["run", //"--rm",
+                   "--user", user.as_str(),
+                   "--volume", volume.as_str(),
+                   "--workdir", builddir,
+                   DOCKER_IMAGE,
+                   "cargo", "build", "--release", "--target-dir", imgtarget.as_str()];
+
+    let out = docker(cli)?;
+    println!("OUT = {}", String::from_utf8(out.stdout.clone())?);
+    println!("ERR = {}", String::from_utf8(out.stderr.clone())?);
+
+    Ok(out)
+}
+
+fn build_target(features: &str) -> Result<String> {
+    let target_base = "target/image";
+    let target_dir = if features == "" {
+        target_base.to_owned()
+    } else {
+        format!("{target_base}/{}", features.replace(" ", "_"))
+    };
+    let bin = format!("{target_dir}/release/rsu");
+
+    BUILD_LOCK.call_once(|| { build_in_container(&target_dir).unwrap(); } );
 
     Ok(bin)
 }

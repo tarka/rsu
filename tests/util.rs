@@ -11,12 +11,11 @@ use std::sync::Once;
 
 pub type Result<T> = result::Result<T, Error>;
 
-pub const BUILD_IMAGE: &str = "rust"; // FIXME: Map to a version?
-pub const DOCKER_IMAGE: &str = BUILD_IMAGE; // Run the test in the build image for simplicity
+pub const BUILD_IMAGE: &str = "rust:1.58-slim-bullseye";
+pub const DOCKER_IMAGE: &str = "debian:bullseye-slim";
 pub const INST_BIN: &str = "/usr/bin/rsu";
 pub const TESTUSER: &str = "testuser";
 pub const TESTPASS: &str = "testpass";
-pub const RUST_VERSION: &str = "1.58"; // FIXME: Get local version?
 
 pub fn docker(cmd: Vec<&str>) -> Result<Output> {
     let out = Command::new("docker")
@@ -102,12 +101,12 @@ fn build_in_container(targetdir: &str) -> Result<Output> {
     let user = format!("{uid}:{gid}");
     let volume = format!("{pwd}:{builddir}");
     let cargo_env = format!("CARGO_HOME={imgtarget}/.cargo");
-    let cli = vec!["run", //"--rm",
+    let cli = vec!["run", "--rm",
                    "--user", user.as_str(),
                    "--volume", volume.as_str(),
                    "--workdir", builddir,
                    "--env", cargo_env.as_str(),
-                   DOCKER_IMAGE,
+                   BUILD_IMAGE,
                    "cargo", "build", "--release", "--target-dir", imgtarget.as_str()];
 
     let out = docker(cli)?;

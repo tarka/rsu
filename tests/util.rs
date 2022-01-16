@@ -138,7 +138,7 @@ pub fn setup() -> Result<Container> {
 
     container.cp(bin.as_str(), INST_BIN)?;
     container.exec(vec!["chown", "root.root", INST_BIN])?;
-    container.exec(vec!["chmod", "4755", INST_BIN])?;
+    container.exec(vec!["chmod", "755", INST_BIN])?;
 
     Ok(container)
 }

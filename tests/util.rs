@@ -101,16 +101,16 @@ fn build_in_container(targetdir: &str) -> Result<Output> {
     let imgtarget = format!("{builddir}/{targetdir}");
     let user = format!("{uid}:{gid}");
     let volume = format!("{pwd}:{builddir}");
+    let cargo_env = format!("CARGO_HOME={imgtarget}/.cargo");
     let cli = vec!["run", //"--rm",
                    "--user", user.as_str(),
                    "--volume", volume.as_str(),
                    "--workdir", builddir,
+                   "--env", cargo_env.as_str(),
                    DOCKER_IMAGE,
                    "cargo", "build", "--release", "--target-dir", imgtarget.as_str()];
 
     let out = docker(cli)?;
-    println!("OUT = {}", String::from_utf8(out.stdout.clone())?);
-    println!("ERR = {}", String::from_utf8(out.stderr.clone())?);
 
     Ok(out)
 }

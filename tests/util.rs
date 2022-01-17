@@ -90,17 +90,18 @@ static BUILD_LOCK: Once = Once::new();
 
 // FIXME: Could merge this with Container if we split this into a
 // crate, but not worth it ATM.
-fn build_in_container(targetdir: &str) -> Result<Output> {
+fn build_in_container(target_ext: &str) -> Result<Output> {
     // See https://hub.docker.com/_/rust
     // docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/myapp -w /usr/src/myapp rust:1.23.0 cargo build --release
 
     let (uid, gid) = getids();
     let pwd = env::var("PWD")?;
     let builddir = "/usr/src";
-    let imgtarget = format!("{builddir}/{targetdir}");
+    let target_base = format!("{builddir}/target");
+    let imgtarget = format!("{target_base}/{target_ext}");
     let user = format!("{uid}:{gid}");
     let volume = format!("{pwd}:{builddir}");
-    let cargo_env = format!("CARGO_HOME={imgtarget}/.cargo");
+    let cargo_env = format!("CARGO_HOME={target_base}/.cargo");
     let cli = vec!["run", "--rm",
                    "--user", user.as_str(),
                    "--volume", volume.as_str(),
@@ -115,15 +116,15 @@ fn build_in_container(targetdir: &str) -> Result<Output> {
 }
 
 fn build_target(features: &str) -> Result<String> {
-    let target_base = "target/image";
-    let target_dir = if features == "" {
-        target_base.to_owned()
+    let ext_base = "docker";
+    let target_ext = if features == "" {
+        format!("{ext_base}/default")
     } else {
-        format!("{target_base}/{}", features.replace(" ", "_"))
+        format!("{ext_base}/{}", features.replace(" ", "_"))
     };
-    let bin = format!("{target_dir}/release/rsu");
+    let bin = format!("target/{target_ext}/release/rsu");
 
-    BUILD_LOCK.call_once(|| { build_in_container(&target_dir).unwrap(); } );
+    BUILD_LOCK.call_once(|| { build_in_container(&target_ext).unwrap(); } );
 
     Ok(bin)
 }

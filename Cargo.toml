@@ -16,3 +16,4 @@ thiserror = "1.0.30"
 [dev-dependencies]
 tempfile = "3.3.0"
 test-case = "1.2.1"
+docker-test = { git = "https://github.com/tarka/docker-test.git" }

@@ -6,15 +6,15 @@ authors = ["Steve Smith <tarkasteve@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.52"
+anyhow = "1.0.53"
 cfg-if = "1.0.0"
-libc = "0.2.112"
+libc = "0.2.113"
 log = "0.4.14"
 simplelog = "0.11.2"
-structopt = "0.3.25"
+structopt = "0.3.26"
 thiserror = "1.0.30"
 
 [dev-dependencies]
 tempfile = "3.3.0"
 test-case = "1.2.1"
-docker-test = { git = "https://github.com/tarka/docker-test.git" }
+docker-test = "0.1.3"

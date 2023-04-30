@@ -6,7 +6,7 @@ authors = ["Steve Smith <tarkasteve@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 cfg-if = "1.0.0"
 extrasafe = "0.1.2"
 libc = "0.2.142"
@@ -17,6 +17,6 @@ thiserror = "1.0.40"
 
 [dev-dependencies]
 tempfile = "3.5.0"
-test-case = "2.2.2"
+test-case = "3.1.0"
 #docker-test = { path = "../docker-test/" }
 docker-test = "0.4.0"

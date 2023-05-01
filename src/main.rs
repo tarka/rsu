@@ -18,7 +18,6 @@ mod errors;
 mod options;
 
 use libc;
-use structopt::StructOpt;
 
 use crate::errors::{Result, AppError};
 use crate::options::Opts;
@@ -49,7 +48,7 @@ fn check_perms() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let opts = options::Opts::from_args();
+    let opts = options::parse_opts();
     init_logging(&opts)?;
 
     check_perms()?;

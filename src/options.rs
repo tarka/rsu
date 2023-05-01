@@ -14,28 +14,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use structopt::StructOpt;
+use argh::FromArgs;
 
-#[derive(Clone, Debug, StructOpt)]
-#[structopt(
-    name = "rsu",
-    about = "Run commands as a user",
-    setting = structopt::clap::AppSettings::ColoredHelp
-)]
+/// Run commands as a user
+#[derive(FromArgs)]
 pub struct Opts {
-    /// Explain what is being done. Can be specified multiple times to
+    /// explain what is being done. Can be specified multiple times to
     /// increase logging.
-    #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
+    #[argh(option, short = 'v', default = "0")]
     pub verbose: u64,
 
-    /// Execute as this user (default 'root')
-    #[structopt(short = "u", long = "user")]
+    /// execute as this user (default 'root')
+    #[argh(option, short = 'u')]
     pub user: Option<String>,
 
-    /// Switch to a login shell for the specified user
-    #[structopt(short = "i", long = "login")]
+    /// switch to a login shell for the specified user
+    #[argh(option, short = 'i', default = "false")]
     pub login: bool,
 
-    #[structopt()]
+    // the command to execute
+    #[argh(positional)]
     pub command: Vec<String>,
+}
+
+pub fn parse_opts() -> Opts {
+    argh::from_env()
 }
